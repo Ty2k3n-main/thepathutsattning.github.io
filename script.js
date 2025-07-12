@@ -40,6 +40,9 @@ function renderPersonList() {
   const list = document.getElementById('personList');
   const search = document.getElementById('search').value.toLowerCase();
   list.innerHTML = '';
+  
+  list.ondrop = isAdmin ? drop : null;
+  list.ondragover = isAdmin ? allowDrop : null;
 
   state.people.forEach((name, index) => {
     if (!search || name.toLowerCase().includes(search)) {
@@ -156,6 +159,7 @@ function removeBox(boxId) {
 
 function drag(e, name) {
   e.dataTransfer.setData('text/plain', name);
+  e.dataTransfer.setData('source', e.target.closest('.box') ? 'box' : 'list');
 }
 
 function allowDrop(e) {
@@ -165,15 +169,37 @@ function allowDrop(e) {
 function drop(e) {
   e.preventDefault();
   const name = e.dataTransfer.getData('text/plain');
+  const source = e.dataTransfer.getData('source');
   const boxId = e.currentTarget.dataset.box;
 
-  if (!state.boxes[boxId].includes(name)) {
-    state.boxes[boxId].push(name);
+  if (source === 'list') {
+    // Från lista till ruta
+    if (!state.boxes[boxId].includes(name)) {
+      state.boxes[boxId].push(name);
+      state.people = state.people.filter(n => n !== name); // Ta bort från listan
+      saveState();
+      render();
+    }
+  } else if (source === 'box') {
+    // Från ruta till annan ruta eller till listan
     for (const id in state.boxes) {
-      if (id !== boxId) {
+      if (state.boxes[id].includes(name)) {
         state.boxes[id] = state.boxes[id].filter(n => n !== name);
       }
     }
+
+    if (boxId) {
+      // Flytta till annan ruta
+      if (!state.boxes[boxId].includes(name)) {
+        state.boxes[boxId].push(name);
+      }
+    } else {
+      // Tillbaka till listan
+      if (!state.people.includes(name)) {
+        state.people.push(name);
+      }
+    }
+
     saveState();
     render();
   }
@@ -243,5 +269,6 @@ if (localStorage.getItem('isAdmin') === 'true') {
   document.getElementById('loginContainer').style.display = 'none';
   document.getElementById('mainContent').style.display = 'block';
 }
+
 
 loadState();

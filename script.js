@@ -270,5 +270,12 @@ if (localStorage.getItem('isAdmin') === 'true') {
   document.getElementById('mainContent').style.display = 'block';
 }
 
+window.addEventListener('storage', (event) => {
+  if (event.key === 'dragDropApp' || event.key === 'vakthavandeNamn' || event.key === 'isAdmin') {
+    // Ladda om tillstånd och rendera om när data ändras i en annan flik
+    loadState();
+  }
+});
+
 
 loadState();
